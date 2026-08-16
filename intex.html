@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<title>AI Dev Studio — Chat, Website Builder, Bug Finder</title>
+<style>
+  :root{
+    --bg:#0f1115; --surface:#171a21; --surface2:#1e222b; --border:#272c37;
+    --text:#e7e9ef; --muted:#9aa3b2; --accent:#4f8cff; --accent-soft:rgba(79,140,255,.14);
+    --ok:#3ddc97; --danger:#ff6b6b; --radius:12px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);-webkit-text-size-adjust:100%;
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif}
+  button{cursor:pointer;font-family:inherit}
+  button:disabled{opacity:.5;cursor:default}
+​
+  .top{position:sticky;top:0;z-index:20;min-height:56px;display:flex;align-items:center;justify-content:space-between;
+    gap:10px;padding:9px 14px;background:rgba(15,17,21,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .mark{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;flex:none;
+    background:linear-gradient(135deg,#4f8cff,#3ddc97);color:#0b0d11;font-weight:800;font-size:15px}
+  .brand h1{margin:0;font-size:16px;font-weight:700}
+  .brand p{margin:0;font-size:12px;color:var(--muted);max-width:54vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .iconbtn{min-width:44px;min-height:44px;border-radius:11px;border:1px solid var(--border);
+    background:var(--surface);color:var(--text);font-size:17px}
+​
+  .tabs{position:sticky;top:56px;z-index:19;display:flex;gap:6px;padding:8px 14px;
+    background:var(--bg);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tab{min-height:44px;padding:8px 15px;border-radius:999px;border:1px solid var(--border);background:transparent;
+    color:var(--muted);font-size:14px;font-weight:600;white-space:nowrap}
+  .tab.is-active{background:var(--accent-soft);border-color:rgba(79,140,255,.5);color:#cfe0ff}
+​
+  main{max-width:1080px;margin:0 auto;padding:14px}
+  .panel{display:none}
+  .panel.is-active{display:block}
+​
+  .msgs{display:flex;flex-direction:column;gap:12px}
+  .msg{border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);padding:12px 13px;overflow:hidden}
+  .msg.user{background:var(--accent-soft);border-color:rgba(79,140,255,.35)}
+  .who{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .acts{margin-top:9px;display:flex;gap:6px;flex-wrap:wrap}
+​
+  .md p{margin:.45em 0}
+  .md h3{margin:.8em 0 .3em;font-size:15px}
+  .md ul{margin:.4em 0;padding-left:1.15em}
+  .md li{margin:.22em 0}
+  .md a{color:#9cc3ff}
+  .md code{font-family:var(--mono);font-size:13px;background:#0c0e13;border:1px solid var(--border);padding:1px 5px;border-radius:6px}
+  .md>*:first-child{margin-top:0}
+  .code{margin:.65em 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#0c0e13}
+  .code-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px 6px 11px;
+    background:#12151c;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.06em}
+  .code pre{margin:0;padding:11px;overflow:auto;max-height:340px;font-family:var(--mono);font-size:13px;line-height:1.5}
+​
+  .composer{position:sticky;bottom:0;padding:10px 0 calc(10px + env(safe-area-inset-bottom));
+    background:linear-gradient(to bottom,rgba(15,17,21,0),var(--bg) 24%)}
+  .composer textarea{width:100%;resize:none;min-height:50px;max-height:180px;padding:13px;border-radius:12px;
+    border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit}
+  .composer-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .spacer{flex:1}
+​
+  .primary{min-height:44px;padding:11px 18px;border:0;border-radius:11px;background:var(--accent);
+    color:#08101f;font-weight:700;font-size:15px}
+  .ghost{min-height:44px;padding:10px 14px;border-radius:11px;border:1px solid var(--border);
+    background:var(--surface);color:var(--text);font-weight:600;font-size:14px}
+  .ghost.danger{color:#ffb4b4;border-color:rgba(255,107,107,.45)}
+  .mini{min-height:36px;padding:6px 11px;border-radius:9px;border:1px solid var(--border);
+    background:var(--surface2);color:var(--text);font-size:12px;font-weight:600}
+  .wide{flex:1}
+​
+  .grid{display:grid;gap:14px}
+  @media(min-width:900px){.grid{grid-template-columns:390px 1fr;align-items:start}}
+  .card{border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);padding:13px;min-width:0}
+  .lbl{display:block;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--muted);margin:12px 0 6px}
+  .card>.lbl:first-child{margin-top:0}
+  textarea,select,input{width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);
+    background:#0f1218;color:var(--text);font:inherit;min-height:44px}
+  textarea{resize:vertical}
+  .mono{font-family:var(--mono);font-size:13px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .btnrow{display:flex;gap:8px;margin-top:13px;align-items:center}
+  .refine{display:flex;gap:8px;margin-top:10px}
+  .refine input{flex:1}
+​
+  .seg{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .segbtn{min-height:36px;padding:6px 13px;border-radius:999px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);font-size:13px;font-weight:600}
+  .segbtn.is-active{background:var(--accent-soft);color:#cfe0ff;border-color:rgba(79,140,255,.5)}
+  .preview{width:100%;height:420px;border:1px solid var(--border);border-radius:10px;background:#fff}
+  @media(min-width:900px){.preview{height:560px}}
+  .codeout{margin:0;padding:11px;border:1px solid var(--border);border-radius:10px;background:#0c0e13;
+    font-family:var(--mono);font-size:12.5px;line-height:1.5;max-height:440px;overflow:auto;
+    white-space:pre-wrap;word-break:break-word}
+​
+  .empty{text-align:center;padding:26px 8px 6px}
+  .empty h2{margin:0 0 6px;font-size:18px}
+  .empty p{margin:0 auto 14px;max-width:36ch;color:var(--muted);font-size:14px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .chip{min-height:44px;padding:10px 14px;border-radius:999px;border:1px solid var(--border);
+    background:var(--surface);color:var(--text);font-size:14px}
+​
+  .muted{color:var(--muted)}
+  .small{font-size:12.5px}
+  .hidden{display:none !important}
+  .err{color:#ffb4b4}
+​
+  .sheet{position:fixed;inset:0;z-index:40;background:rgba(6,8,12,.62);display:flex;align-items:flex-end;justify-content:center}
+  .sheet-card{width:100%;max-width:560px;background:var(--surface);border:1px solid var(--border);
+    border-radius:16px 16px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+  @media(min-width:700px){.sheet{align-items:center;padding:20px}.sheet-card{border-radius:16px}}
+  .sheet-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  input[type=range]{padding:0;min-height:34px;border:0;background:transparent}
+​
+  .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    background:#e7e9ef;color:#0f1115;padding:9px 15px;border-radius:999px;font-size:13px;font-weight:700;
+    z-index:60;box-shadow:0 10px 26px rgba(0,0,0,.45)}
+  footer.note{max-width:1080px;margin:0 auto;padding:18px 14px 28px;color:var(--muted);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+​
+<header class="top">
+  <div class="brand">
+    <span class="mark">AI</span>
+    <div>
+      <h1>AI Dev Studio</h1>
+      <p id="modelChip">Auto (free model)</p>
+    </div>
+  </div>
+  <button id="settingsBtn" class="iconbtn" aria-label="Settings">&#9881;</button>
+</header>
+​
+<nav class="tabs" id="tabs">
+  <button class="tab is-active" data-tab="chat">Chat</button>
+  <button class="tab" data-tab="site">Website banao</button>
+  <button class="tab" data-tab="bug">Bug finder</button>
+</nav>
+​
+<main>
+  <!-- ============ CHAT ============ -->
+  <section class="panel is-active" id="panel-chat">
+    <div id="chatEmpty" class="empty">
+      <h2>Kuch bhi poocho</h2>
+      <p>Code likhwao, plan banwao, ya doubt clear karo. Chat isi phone me save rehti hai.</p>
+      <div class="chips">
+        <button class="chip" data-q="Node.js me ek REST API banane ka step-by-step plan do, folder structure ke saath.">API plan</button>
+        <button class="chip" data-q="React me infinite scroll ka simple working example code likho.">React code</button>
+        <button class="chip" data-q="Meri website Google par rank kare, uske liye technical SEO checklist do.">SEO checklist</button>
+      </div>
+    </div>
+    <div id="msgs" class="msgs"></div>
+    <div class="composer">
+      <textarea id="chatInput" rows="1" placeholder="Message likho… (Ctrl+Enter = send)"></textarea>
+      <div class="composer-row">
+        <button id="chatNew" class="ghost">New chat</button>
+        <button id="chatRegen" class="ghost hidden">Regenerate</button>
+        <span class="spacer"></span>
+        <button id="chatStop" class="ghost danger hidden">Stop</button>
+        <button id="chatSend" class="primary">Send</button>
+      </div>
+    </div>
+  </section>
+​
+  <!-- ============ WEBSITE BUILDER ============ -->
+  <section class="panel" id="panel-site">
+    <div class="grid">
+      <div class="card">
+        <label class="lbl" for="sitePrompt">Kaisi website chahiye?</label>
+        <textarea id="sitePrompt" rows="5" placeholder="Ex: Ek coaching institute ki landing page — hero section, 6 courses, teachers, testimonials, WhatsApp button aur contact form"></textarea>
+        <div class="row2">
+          <div>
+            <label class="lbl" for="siteKind">Type</label>
+            <select id="siteKind">
+              <option>Landing page</option>
+              <option>Portfolio</option>
+              <option>Business / Agency site</option>
+              <option>Blog page</option>
+              <option>Dashboard UI</option>
+              <option>Form / Lead page</option>
+              <option>Pricing page</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl" for="siteStyle">Style</label>
+            <select id="siteStyle">
+              <option>Modern minimal</option>
+              <option>Dark neon / SaaS</option>
+              <option>Colorful playful</option>
+              <option>Corporate clean</option>
+              <option>Glassmorphism</option>
+            </select>
+          </div>
+        </div>
+        <div class="row2">
+          <div>
+            <label class="lbl" for="siteTheme">Colour mode</label>
+            <select id="siteTheme">
+              <option>Light</option>
+              <option>Dark</option>
+              <option>Auto (both)</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl" for="siteLang">Content language</label>
+            <select id="siteLang">
+              <option>Hinglish</option>
+              <option>Hindi</option>
+              <option>English</option>
+            </select>
+          </div>
+        </div>
+        <div class="btnrow">
+          <button id="siteGo" class="primary wide">Generate website</button>
+          <button id="siteStop" class="ghost danger hidden">Stop</button>
+        </div>
+        <div class="refine">
+          <input id="siteRefine" placeholder="Change: hero green karo, pricing add karo" />
+          <button id="siteRefineGo" class="ghost">Refine</button>
+        </div>
+        <p class="muted small">Refine se poora code dobara likhwaya jaata hai — pehle ek baar generate kar lo.</p>
+      </div>
+​
+      <div class="card">
+        <div class="seg" id="siteSeg">
+          <button class="segbtn is-active" data-view="preview">Preview</button>
+          <button class="segbtn" data-view="code">Code</button>
+          <span class="spacer"></span>
+          <button id="siteCopy" class="mini">Copy</button>
+          <button id="siteDl" class="mini">Download</button>
+        </div>
+        <iframe id="sitePreview" class="preview hidden" title="Website preview" sandbox="allow-scripts allow-forms allow-modals allow-popups"></iframe>
+        <pre id="siteCode" class="codeout hidden"></pre>
+        <p id="siteHint" class="muted small">Generate dabao — live preview yahin khulega, code Code tab me milega.</p>
+      </div>
+    </div>
+  </section>
+​
+  <!-- ============ BUG FINDER ============ -->
+  <section class="panel" id="panel-bug">
+    <div class="grid">
+      <div class="card">
+        <label class="lbl" for="bugCode">Code paste karo</label>
+        <textarea id="bugCode" rows="11" class="mono" placeholder="Yahan apna code paste karo…"></textarea>
+        <div class="row2">
+          <div>
+            <label class="lbl" for="bugLang">Language</label>
+            <select id="bugLang">
+              <option>Auto-detect</option>
+              <option>JavaScript</option>
+              <option>TypeScript</option>
+              <option>Python</option>
+              <option>HTML / CSS</option>
+              <option>PHP</option>
+              <option>Java</option>
+              <option>C / C++</option>
+              <option>SQL</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl" for="bugTask">Kaam</label>
+            <select id="bugTask">
+              <option value="find">Bugs dhoondo</option>
+              <option value="fix">Fix karke poora code do</option>
+              <option value="explain">Line-by-line samjhao</option>
+              <option value="review">Review + improvements</option>
+              <option value="test">Test cases banao</option>
+            </select>
+          </div>
+        </div>
+        <div class="btnrow">
+          <button id="bugGo" class="primary wide">Analyse code</button>
+          <button id="bugStop" class="ghost danger hidden">Stop</button>
+        </div>
+        <p class="muted small">Error message bhi code ke neeche paste kar do to fix zyada accurate milta hai.</p>
+      </div>
+​
+      <div class="card">
+        <div class="seg">
+          <strong class="small">Result</strong>
+          <span class="spacer"></span>
+          <button id="bugCopy" class="mini">Copy</button>
+        </div>
+        <div id="bugOut" class="md"><p class="muted small">Result yahan aayega — bugs, fixed code aur suggestions ke saath.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+​
+<footer class="note">API key server par rehti hai, browser me kabhi nahi — sab kuch tumhare Vercel function ke through jaata hai.</footer>
+​
+<!-- ============ SETTINGS ============ -->
+<div id="sheet" class="sheet hidden" role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="sheet-card">
+    <div class="sheet-top">
+      <strong>Settings</strong>
+      <button id="sheetClose" class="iconbtn" aria-label="Close">&#10005;</button>
+    </div>
+    <label class="lbl" for="modelSel">Model</label>
+    <select id="modelSel"><option value="">Auto (server default — free)</option></select>
+    <div class="btnrow">
+      <button id="modelRefresh" class="ghost">Model list refresh</button>
+    </div>
+    <label class="lbl" for="temp">Creativity — <span id="tempVal" class="muted">0.6</span></label>
+    <input id="temp" type="range" min="0" max="1" step="0.1" value="0.6" />
+    <label class="lbl" for="byok">Apni OrcaRouter key (optional)</label>
+    <input id="byok" type="password" placeholder="sk-orca-…" autocomplete="off" />
+    <p class="muted small">Server par key set ho to yahan kuch daalne ki zaroorat nahi. Yahan daali key sirf isi browser me save hoti hai aur sirf tumhare hi server par jaati hai. Shared phone par ise use na karo.</p>
+    <div class="btnrow">
+      <button id="saveSet" class="primary wide">Save</button>
+      <button id="clearKey" class="ghost">Key hatao</button>
+    </div>
+  </div>
+</div>
+​
+<div id="toast" class="toast hidden"></div>
+​
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var LS = {
+    get: function(k, d){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+    set: function(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+​
+  var state = { tab:"chat", model:"", temp:0.6, key:"", chat:[], siteHtml:"", bugOut:"", busy:false, ctrl:null };
+​
+  /* ---------- helpers ---------- */
+  var toastT;
+  function toast(msg){
+    var t = $("toast"); t.textContent = msg; t.classList.remove("hidden");
+    clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.add("hidden"); }, 1900);
+  }
+  function esc(s){
+    return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+  function copyText(txt){
+    if(!txt){ toast("Kuch copy karne ko nahi hai"); return; }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){ toast("Copy ho gaya"); }, fallback);
+    } else { fallback(); }
+    function fallback(){
+      var ta = document.createElement("textarea");
+      ta.value = txt; ta.style.position="fixed"; ta.style.opacity="0";
+      document.body.appendChild(ta); ta.select();
+      try{ document.execCommand("copy"); toast("Copy ho gaya"); }catch(e){ toast("Copy fail — manually select karo"); }
+      ta.remove();
+    }
+  }
+  function download(name, text, type){
+    var b = new Blob([text], { type: type || "text/plain;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(b); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1200);
+  }
+  function autoGrow(el){ el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 180) + "px"; }
+​
+  /* ---------- tiny markdown ---------- */
+  function inline(t){
+    return esc(t)
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  }
+  function codeBlock(lang, code){
+    return '<div class="code"><div class="code-top"><span>' + esc(lang || "code") +
+      '</span><button class="mini js-copy" type="button">Copy</button></div><pre>' + esc(code) + "</pre></div>";
+  }
+  function md(src){
+    var codes = [];
+    var s = String(src || "");
+    s = s.replace(/```([A-Za-z0-9+#._-]*)\r?\n?([\s\S]*?)```/g, function(m, l, c){
+      codes.push([l, c]); return "\n[[[CODE" + (codes.length - 1) + "]]]\n";
+    });
+    var open = s.indexOf("```");
+    if(open > -1){
+      var m2 = s.slice(open).match(/^```([A-Za-z0-9+#._-]*)\r?\n?([\s\S]*)$/);
+      if(m2){ codes.push([m2[1], m2[2]]); s = s.slice(0, open) + "\n[[[CODE" + (codes.length - 1) + "]]]\n"; }
+    }
+    var lines = s.split("\n"), out = [], inList = false;
+    for(var i = 0; i < lines.length; i++){
+      var t = lines[i].trim();
+      var ph = t.match(/^\[\[\[CODE(\d+)\]\]\]$/);
+      if(ph){
+        if(inList){ out.push("</ul>"); inList = false; }
+        out.push(codeBlock(codes[+ph[1]][0], codes[+ph[1]][1]));
+        continue;
+      }
+      if(!t){ if(inList){ out.push("</ul>"); inList = false; } continue; }
+      var h = t.match(/^#{1,6}\s+(.*)$/);
+      if(h){ if(inList){ out.push("</ul>"); inList = false; } out.push("<h3>" + inline(h[1]) + "</h3>"); continue; }
+      var li = t.match(/^[-*\u2022]\s+(.*)$/) || t.match(/^\d+[.)]\s+(.*)$/);
+      if(li){ if(!inList){ out.push("<ul>"); inList = true; } out.push("<li>" + inline(li[1]) + "</li>"); continue; }
+      if(inList){ out.push("</ul>"); inList = false; }
+      out.push("<p>" + inline(t) + "</p>");
+    }
+    if(inList) out.push("</ul>");
+    return out.join("");
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest ? e.target.closest(".js-copy") : null;
+    if(!b) return;
+    var wrap = b.closest(".code");
+    var pre = wrap ? wrap.querySelector("pre") : null;
+    if(pre) copyText(pre.textContent);
+  });
+​
+  /* ---------- API ---------- */
+  function callAI(opts){
+    var body = {
+      mode: opts.mode,
+      messages: opts.messages,
+      temperature: typeof opts.temperature === "number" ? opts.temperature : state.temp,
+      stream: true
+    };
+    if(state.model) body.model = state.model;
+    if(state.key) body.key = state.key;
+​
+    return fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: opts.signal
+    }).then(function(r){
+      var ct = r.headers.get("content-type") || "";
+      if(!r.ok || ct.indexOf("text/event-stream") === -1){
+        return r.text().then(function(txt){
+          var d = {}; try{ d = JSON.parse(txt); }catch(e){}
+          if(!r.ok) throw new Error(d.error || ("Server error " + r.status));
+          var out = d.text || "";
+          if(d.model) setModel(d.model);
+          opts.onDelta(out);
+          return out;
+        });
+      }
+      var reader = r.body.getReader(), dec = new TextDecoder(), buf = "", full = "", gotModel = false;
+      function pump(){
+        return reader.read().then(function(res){
+          if(res.done) return full;
+          buf += dec.decode(res.value, { stream: true });
+          var parts = buf.split("\n\n");
+          buf = parts.pop();
+          for(var i = 0; i < parts.length; i++){
+            var lines = parts[i].split("\n");
+            for(var j = 0; j < lines.length; j++){
+              var line = lines[j].trim();
+              if(line.indexOf("data:") !== 0) continue;
+              var payload = line.slice(5).trim();
+              if(!payload || payload === "[DONE]") continue;
+              var jd; try{ jd = JSON.parse(payload); }catch(e){ continue; }
+              if(jd.error) throw new Error(jd.error.message || String(jd.error));
+              if(jd.model && !gotModel){ gotModel = true; setModel(jd.model); }
+              var ch = jd.choices && jd.choices[0] ? jd.choices[0] : null;
+              var d = ch ? ((ch.delta && ch.delta.content) || ch.text || "") : "";
+              if(d){ full += d; opts.onDelta(full); }
+            }
+          }
+          return pump();
+        });
+      }
+      return pump();
+    });
+  }
+​
+  function setBusy(on, stopBtnId){
+    state.busy = on;
+    $("chatSend").disabled = on;
+    $("siteGo").disabled = on;
+    $("siteRefineGo").disabled = on;
+    $("bugGo").disabled = on;
+    ["chatStop", "siteStop", "bugStop"].forEach(function(id){
+      $(id).classList.toggle("hidden", !(on && id === stopBtnId));
+    });
+  }
+  function run(mode, messages, onDelta, temperature, stopBtnId){
+    var ctrl = new AbortController();
+    state.ctrl = ctrl;
+    setBusy(true, stopBtnId);
+    return callAI({ mode: mode, messages: messages, onDelta: onDelta, temperature: temperature, signal: ctrl.signal })
+      .then(function(full){ setBusy(false); state.ctrl = null; return full; })
+      .catch(function(err){ setBusy(false); state.ctrl = null; throw err; });
+  }
+  function stopRun(){ if(state.ctrl){ state.ctrl.abort(); toast("Rok diya"); } }
+  function errText(e){
+    if(e && (e.name === "AbortError" || e.code === 20)) return "Rok diya gaya.";
+    return (e && e.message) ? e.message : "Kuch galat ho gaya. Dobara try karo.";
+  }
+  function setModel(m){ $("modelChip").textContent = m; }
+​
+  /* ---------- chat ---------- */
+  function persistChat(){ LS.set("ds.chat", state.chat.slice(-40)); }
+  function renderChat(){
+    var box = $("msgs");
+    box.innerHTML = "";
+    state.chat.forEach(function(m){
+      var d = document.createElement("div");
+      d.className = "msg " + m.role;
+      var who = document.createElement("div");
+      who.className = "who";
+      who.textContent = m.role === "user" ? "Tum" : "AI";
+      var body = document.createElement("div");
+      body.className = "md";
+      if(m.role === "user") body.innerHTML = "<p>" + esc(m.content).replace(/\n/g, "<br>") + "</p>";
+      else if(!m.content) body.innerHTML = '<p class="muted small">Soch raha hoon…</p>';
+      else body.innerHTML = md(m.content);
+      d.appendChild(who); d.appendChild(body);
+      if(m.role === "assistant" && m.content){
+        var acts = document.createElement("div");
+        acts.className = "acts";
+        var c = document.createElement("button");
+        c.className = "mini"; c.type = "button"; c.textContent = "Copy";
+        c.addEventListener("click", function(){ copyText(m.content); });
+        acts.appendChild(c);
+        d.appendChild(acts);
+      }
+      box.appendChild(d);
+    });
+    $("chatEmpty").classList.toggle("hidden", state.chat.length > 0);
+    var last = state.chat[state.chat.length - 1];
+    $("chatRegen").classList.toggle("hidden", !(last && last.role === "assistant" && last.content && !state.busy));
+  }
+  function updateLastBubble(text){
+    var nodes = $("msgs").querySelectorAll(".msg.assistant .md");
+    var el = nodes[nodes.length - 1];
+    if(el) el.innerHTML = md(text);
+  }
+  function historyForApi(){
+    return state.chat.filter(function(m){ return m.content; }).map(function(m){ return { role: m.role, content: m.content }; });
+  }
+  function sendChat(text){
+    if(state.busy) return;
+    var t = (text !== undefined ? text : $("chatInput").value).trim();
+    if(!t){ toast("Pehle message likho"); return; }
+    $("chatInput").value = ""; autoGrow($("chatInput"));
+    state.chat.push({ role: "user", content: t });
+    var history = historyForApi();
+    state.chat.push({ role: "assistant", content: "" });
+    renderChat();
+    window.scrollTo(0, document.body.scrollHeight);
+    run("chat", history, function(full){
+      state.chat[state.chat.length - 1].content = full;
+      updateLastBubble(full);
+    }, state.temp, "chatStop").then(function(full){
+      if(!full) state.chat[state.chat.length - 1].content = "(khaali jawab aaya — dobara try karo)";
+      persistChat(); renderChat();
+    }).catch(function(e){
+      state.chat[state.chat.length - 1].content = "⚠️ " + errText(e);
+      persistChat(); renderChat();
+    });
+  }
+  function regen(){
+    if(state.busy) return;
+    if(state.chat.length && state.chat[state.chat.length - 1].role === "assistant") state.chat.pop();
+    var lastUser = null;
+    for(var i = state.chat.length - 1; i >= 0; i--){ if(state.chat[i].role === "user"){ lastUser = state.chat[i].content; break; } }
+    if(!lastUser){ renderChat(); return; }
+    state.chat.pop();
+    persistChat();
+    sendChat(lastUser);
+  }
+​
+  /* ---------- website builder ---------- */
+  function extractHtml(text){
+    var re = /```(?:html|HTML)?\r?\n?([\s\S]*?)```/g, m, best = "";
+    while((m = re.exec(text)) !== null){ if(m[1].length > best.length) best = m[1]; }
+    if(!best){
+      var i = text.search(/<!doctype html|<html[\s>]/i);
+      if(i > -1) best = text.slice(i);
+    }
+    return best.trim();
+  }
+  function setView(v){
+    document.querySelectorAll("#siteSeg .segbtn").forEach(function(b){ b.classList.toggle("is-active", b.dataset.view === v); });
+    $("sitePreview").classList.toggle("hidden", v !== "preview" || !state.siteHtml);
+    $("siteCode").classList.toggle("hidden", v !== "code");
+    $("siteHint").classList.toggle("hidden", !(v === "preview" && !state.siteHtml));
+  }
+  function genSite(refine){
+    if(state.busy) return;
+    var p = $("sitePrompt").value.trim();
+    var msg;
+    if(refine){
+      if(!state.siteHtml){ toast("Pehle ek website generate karo"); return; }
+      msg = "Yeh mera current single-file HTML hai:\n\n```html\n" + state.siteHtml.slice(0, 18000) +
+        "\n```\n\nIsme ye changes karo: " + refine + "\n\nPoora updated HTML file dobara do.";
+    } else {
+      if(!p){ toast("Pehle website ka description likho"); return; }
+      msg = "Website banao.\nType: " + $("siteKind").value +
+        "\nStyle: " + $("siteStyle").value +
+        "\nColour mode: " + $("siteTheme").value +
+        "\nContent language: " + $("siteLang").value +
+        "\n\nDescription: " + p;
+    }
+    $("siteHint").classList.add("hidden");
+    var codeEl = $("siteCode");
+    codeEl.textContent = "";
+    setView("code");
+    run("site", [{ role: "user", content: msg }], function(full){
+      codeEl.textContent = full;
+      codeEl.scrollTop = codeEl.scrollHeight;
+    }, 0.4, "siteStop").then(function(full){
+      var html = extractHtml(full) || full;
+      if(!html){ toast("Code nahi mila, dobara try karo"); return; }
+      state.siteHtml = html;
+      codeEl.textContent = html;
+      $("sitePreview").srcdoc = html;
+      setView("preview");
+      $("siteRefine").value = "";
+      toast("Website ready");
+    }).catch(function(e){
+      codeEl.textContent = "⚠️ " + errText(e);
+      setView("code");
+    });
+  }
+​
+  /* ---------- bug finder ---------- */
+  function analyse(){
+    if(state.busy) return;
+    var code = $("bugCode").value.trim();
+    if(!code){ toast("Pehle code paste karo"); return; }
+    var tasks = {
+      find: "Is code ke saare real bugs, edge cases aur security issues dhoondo.",
+      fix: "Is code ke bugs fix karke poora corrected code do.",
+      explain: "Is code ko section-by-section simple bhasha me samjhao, phir bugs batao.",
+      review: "Is code ka senior-level review karo: bugs, performance, readability, security.",
+      test: "Is code ke liye test cases likho (happy path + edge cases) aur bataao kaunsa case fail hoga."
+    };
+    var msg = tasks[$("bugTask").value] + "\nLanguage: " + $("bugLang").value +
+      "\n\n```\n" + code.slice(0, 20000) + "\n```";
+    var outEl = $("bugOut");
+    outEl.innerHTML = '<p class="muted small">Code padh raha hoon…</p>';
+    run("bug", [{ role: "user", content: msg }], function(full){
+      state.bugOut = full;
+      outEl.innerHTML = md(full);
+    }, 0.3, "bugStop").then(function(full){
+      state.bugOut = full;
+      outEl.innerHTML = full ? md(full) : '<p class="err">Khaali jawab aaya — dobara try karo.</p>';
+    }).catch(function(e){
+      outEl.innerHTML = '<p class="err">⚠️ ' + esc(errText(e)) + "</p>";
+    });
+  }
+​
+  /* ---------- models + settings ---------- */
+  var DEFAULT_MODELS = [
+    { id: "deepseek/deepseek-v4-pro-free", free: true },
+    { id: "qwen/qwen3.8-27b-free", free: true },
+    { id: "openai/gpt-4o-mini", free: false },
+    { id: "anthropic/claude-haiku-4.5", free: false },
+    { id: "google/gemini-flash-latest", free: false },
+    { id: "orcarouter/auto", free: false }
+  ];
+  function fillModels(list){
+    var sel = $("modelSel");
+    sel.innerHTML = "";
+    var auto = document.createElement("option");
+    auto.value = ""; auto.textContent = "Auto (server default — free)";
+    sel.appendChild(auto);
+    [["FREE models", list.filter(function(m){ return m.free; })],
+     ["Paid models", list.filter(function(m){ return !m.free; })]].forEach(function(g){
+      if(!g[1].length) return;
+      var og = document.createElement("optgroup");
+      og.label = g[0] + " (" + g[1].length + ")";
+      g[1].slice(0, 150).forEach(function(m){
+        var o = document.createElement("option");
+        o.value = m.id; o.textContent = m.id;
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    });
+    if(state.model){
+      sel.value = state.model;
+      if(sel.value !== state.model){
+        var o2 = document.createElement("option");
+        o2.value = state.model; o2.textContent = state.model + " (saved)";
+        sel.appendChild(o2); sel.value = state.model;
+      }
+    }
+  }
+  function loadModels(force){
+    var opts = state.key
+      ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: state.key }) }
+      : { method: "GET" };
+    fetch("/api/models" + (force ? "?refresh=1" : ""), opts)
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var list = (d && d.models && d.models.length) ? d.models : DEFAULT_MODELS;
+        fillModels(list);
+        if(force) toast(list.length + " models load hue");
+      })
+      .catch(function(){ fillModels(DEFAULT_MODELS); });
+  }
+  function openSheet(){ $("sheet").classList.remove("hidden"); }
+  function closeSheet(){ $("sheet").classList.add("hidden"); }
+  function loadSettings(){
+    var s = LS.get("ds.settings", {});
+    state.model = s.model || "";
+    state.temp = typeof s.temp === "number" ? s.temp : 0.6;
+    state.key = s.key || "";
+    state.chat = LS.get("ds.chat", []) || [];
+    $("temp").value = String(state.temp);
+    $("tempVal").textContent = String(state.temp);
+    $("byok").value = state.key;
+    $("modelChip").textContent = state.model || "Auto (free model)";
+  }
+  function saveSettings(){
+    state.model = $("modelSel").value;
+    state.temp = parseFloat($("temp").value) || 0.6;
+    state.key = $("byok").value.trim();
+    LS.set("ds.settings", { model: state.model, temp: state.temp, key: state.key });
+    $("modelChip").textContent = state.model || "Auto (free model)";
+    closeSheet(); toast("Settings save ho gayi");
+  }
+​
+  /* ---------- wiring ---------- */
+  $("tabs").addEventListener("click", function(e){
+    var b = e.target.closest(".tab");
+    if(!b) return;
+    state.tab = b.dataset.tab;
+    document.querySelectorAll(".tab").forEach(function(x){ x.classList.toggle("is-active", x.dataset.tab === state.tab); });
+    document.querySelectorAll(".panel").forEach(function(p){ p.classList.toggle("is-active", p.id === "panel-" + state.tab); });
+    window.scrollTo(0, 0);
+  });
+  $("chatSend").addEventListener("click", function(){ sendChat(); });
+  $("chatStop").addEventListener("click", stopRun);
+  $("siteStop").addEventListener("click", stopRun);
+  $("bugStop").addEventListener("click", stopRun);
+  $("chatNew").addEventListener("click", function(){
+    if(state.busy){ toast("Pehle Stop dabao"); return; }
+    state.chat = []; persistChat(); renderChat(); toast("Nayi chat");
+  });
+  $("chatRegen").addEventListener("click", regen);
+  $("chatInput").addEventListener("input", function(){ autoGrow(this); });
+  $("chatInput").addEventListener("keydown", function(e){
+    if((e.ctrlKey || e.metaKey) && e.key === "Enter"){ e.preventDefault(); sendChat(); }
+  });
+  document.querySelectorAll(".chip").forEach(function(c){
+    c.addEventListener("click", function(){ sendChat(c.dataset.q); });
+  });
+  $("siteGo").addEventListener("click", function(){ genSite(null); });
+  $("siteRefineGo").addEventListener("click", function(){
+    var v = $("siteRefine").value.trim();
+    if(!v){ toast("Change kya karna hai wo likho"); return; }
+    genSite(v);
+  });
+  $("siteSeg").addEventListener("click", function(e){
+    var b = e.target.closest(".segbtn");
+    if(b) setView(b.dataset.view);
+  });
+  $("siteCopy").addEventListener("click", function(){ copyText(state.siteHtml); });
+  $("siteDl").addEventListener("click", function(){
+    if(!state.siteHtml){ toast("Pehle website generate karo"); return; }
+    download("website.html", state.siteHtml, "text/html;charset=utf-8");
+  });
+  $("bugGo").addEventListener("click", analyse);
+  $("bugCopy").addEventListener("click", function(){ copyText(state.bugOut); });
+  $("settingsBtn").addEventListener("click", openSheet);
+  $("sheetClose").addEventListener("click", closeSheet);
+  $("sheet").addEventListener("click", function(e){ if(e.target === $("sheet")) closeSheet(); });
+  $("saveSet").addEventListener("click", saveSettings);
+  $("clearKey").addEventListener("click", function(){
+    $("byok").value = ""; state.key = "";
+    LS.set("ds.settings", { model: state.model, temp: state.temp, key: "" });
+    toast("Key hata di");
+  });
+  $("temp").addEventListener("input", function(){ $("tempVal").textContent = this.value; });
+  $("modelRefresh").addEventListener("click", function(){ loadModels(true); });
+​
+  loadSettings();
+  renderChat();
+  loadModels(false);
+  autoGrow($("chatInput"));
+})();
+</script>
+</body>
+</html>
+​
